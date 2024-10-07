@@ -29,7 +29,8 @@ const userSchema = new Schema(
         validator: function (v) {
           return /^\d{10}$/.test(v); // For a 10-digit number
         },
-        message: (props) => `${props.value} is not a valid phone number!`,
+        message: (props) =>
+          `${props.value} is not a valid phone number! (Phone no should be of length 10)`,
       },
     },
 

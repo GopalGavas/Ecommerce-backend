@@ -3,6 +3,7 @@ import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils//apiResponse.js";
 import { User } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
+import { json } from "express";
 
 const generateAccessAndRefreshToken = async (userId) => {
   const user = await User.findById(userId);
@@ -194,4 +195,104 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   }
 });
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+const changePassword = asyncHandler(async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+
+  if (!oldPassword || !newPassword) {
+    throw new ApiError(400, "old Password and new Password are required");
+  }
+
+  const user = await User.findById(req.user?._id);
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const isPasswordCorrect = await user.comparePassword(oldPassword);
+
+  if (!isPasswordCorrect) {
+    throw new ApiError(400, "Invalid Password");
+  }
+
+  user.password = newPassword;
+
+  user.save({ validateBeforeSave: false });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "password changed successfully"));
+});
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+  return res
+    .status(200)
+    .json(new ApiResponse(200, req.user, "Current User fetched successfully"));
+});
+
+const updateUserDetails = asyncHandler(async (req, res) => {
+  const { fullName, email, phoneNo } = req.body;
+
+  if (!fullName && !email && !phoneNo) {
+    throw new ApiError(
+      400,
+      "At least one of fullName, email, or phoneNo is required for updating."
+    );
+  }
+
+  // [Check if email number already exists in the database]
+  if (email) {
+    const existingEmailUser = await User.findOne({ email });
+    if (
+      existingEmailUser &&
+      existingEmailUser._id.toString() !== req.user._id.toString()
+    ) {
+      throw new ApiError(400, "Email is already in use by another user.");
+    }
+  }
+
+  // [Check if phone number already exists in the database]
+  if (phoneNo) {
+    const existingPhoneUser = await User.findOne({ phoneNo });
+    if (
+      existingPhoneUser &&
+      existingPhoneUser._id.toString() !== req.user._id.toString()
+    ) {
+      throw new ApiError(
+        400,
+        "Phone number is already in use by another user."
+      );
+    }
+  }
+
+  const updateUser = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        ...(fullName && { fullName }),
+        ...(email && { email }),
+        ...(phoneNo && { phoneNo }),
+      },
+    },
+    { new: true }
+  ).select("-password");
+
+  if (!updateUser) {
+    throw new ApiError(500, "Something went wrong while updating the user");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, updateUser, "User details updated successfully")
+    );
+});
+
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  changePassword,
+  getCurrentUser,
+  updateUserDetails,
+};
