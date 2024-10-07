@@ -147,7 +147,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     req.cookies.refreshToken || req.body.refreshToken;
 
   if (!incomingRefreshToken) {
-    throw new ApiError(401, "unauthorized request");
+    throw new ApiError(401, "Invalid request , cant find you refreshToken");
   }
 
   try {
@@ -162,7 +162,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       throw new ApiError(401, "Invalid Refresh Token");
     }
 
-    if (incomingRefreshToken !== user.refreshToken) {
+    if (incomingRefreshToken !== user?.refreshToken) {
       throw new ApiError(401, "Refresh Token is expired or used");
     }
 
@@ -187,7 +187,10 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         )
       );
   } catch (error) {
-    throw new ApiError(401, error.message || "Error refreshing access token");
+    throw new ApiError(
+      401,
+      "unauthorized request , can't refresh accessToken" || error.message
+    );
   }
 });
 
