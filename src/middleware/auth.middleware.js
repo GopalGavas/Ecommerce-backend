@@ -39,4 +39,19 @@ const verifyJwt = asyncHandler(async (req, _, next) => {
   }
 });
 
-export { verifyJwt };
+const isAdmin = asyncHandler(async (req, _, next) => {
+  const { email } = req.user;
+
+  const user = await User.findOne({ email });
+
+  if (user?.role !== "admin") {
+    throw new ApiError(
+      401,
+      "You are not authorized for this action since you are not a admin"
+    );
+  }
+
+  next();
+});
+
+export { verifyJwt, isAdmin };

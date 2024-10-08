@@ -1,9 +1,9 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
-import { ApiResponse } from "../utils//apiResponse.js";
+import { ApiResponse } from "../utils/apiResponse.js";
 import { User } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
-import { json } from "express";
+import { isValidObjectId } from "mongoose";
 
 const generateAccessAndRefreshToken = async (userId) => {
   const user = await User.findById(userId);
@@ -89,7 +89,7 @@ const loginUser = asyncHandler(async (req, res) => {
   const verfiyPassword = await user.comparePassword(password);
 
   if (!verfiyPassword) {
-    throw new ApiError(400, "Invalid password");
+    throw new ApiError(400, "Invalid credentials");
   }
 
   const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
@@ -124,8 +124,8 @@ const logoutUser = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(
     req.user?._id,
     {
-      $set: {
-        refreshToken: undefined,
+      $unset: {
+        refreshToken: "",
       },
     },
     { new: true }
@@ -134,13 +134,14 @@ const logoutUser = asyncHandler(async (req, res) => {
   const options = {
     httpOnly: true,
     secure: true,
+    sameSite: "strict",
   };
 
   return res
-    .status(200)
+    .status(204)
     .clearCookie("accessToken", options)
     .clearCookie("refreshToken", options)
-    .json(new ApiResponse(200, {}, "User logged out successfully"));
+    .send();
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
@@ -229,6 +230,24 @@ const getCurrentUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, req.user, "Current User fetched successfully"));
 });
 
+const getUserById = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  if (!isValidObjectId(userId)) {
+    throw new ApiError(400, "Enter a valid User Id");
+  }
+
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "User fetched successfully"));
+});
+
 const updateUserDetails = asyncHandler(async (req, res) => {
   const { fullName, email, phoneNo } = req.body;
 
@@ -287,6 +306,194 @@ const updateUserDetails = asyncHandler(async (req, res) => {
     );
 });
 
+const blockUser = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  if (!isValidObjectId(userId)) {
+    throw new ApiError(400, "Enter a valid user Id");
+  }
+
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  if (user.isBlocked) {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "User is already blocked"));
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(
+    user?._id,
+    { $set: { isBlocked: true } },
+    { new: true }
+  );
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedUser, "User blocked successfully"));
+});
+
+const unblockUser = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  if (!isValidObjectId(userId)) {
+    throw new ApiError(400, "Enter a valid User Id");
+  }
+
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  if (!user.isBlocked) {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "User is already unblocked"));
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(
+    user?._id,
+    { $set: { isBlocked: false } },
+    { new: true }
+  );
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedUser, "User unblocked successfully"));
+});
+
+const deactivateOwnAccount = asyncHandler(async (req, res) => {
+  await User.findByIdAndUpdate(
+    req.user?._id,
+    { $set: { isDeleted: true } },
+    { new: true }
+  );
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "Strict",
+  };
+
+  return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(
+      new ApiResponse(
+        200,
+        {},
+        "Your account has been deactivated and session invalidated"
+      )
+    );
+});
+
+const deleteOwnAccount = asyncHandler(async (req, res) => {
+  await User.findByIdAndDelete(req.user?._id);
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "Strict",
+  };
+
+  return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(
+      new ApiResponse(
+        200,
+        {},
+        "Your account has been permanently deleted and session invalidated"
+      )
+    );
+});
+
+const deactivateUser = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  if (!isValidObjectId(userId)) {
+    throw new ApiError(400, "Invalid User Id");
+  }
+
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  if (user.isDeleted) {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "User is already Deactivated"));
+  }
+
+  await User.findByIdAndUpdate(
+    userId,
+    {
+      $set: {
+        isDeleted: true,
+      },
+    },
+    { new: true }
+  );
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "User account has been deactivated"));
+});
+
+const deleteUser = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  if (!isValidObjectId(userId)) {
+    throw new ApiError(400, "Invalid User Id");
+  }
+
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  await User.findByIdAndDelete(userId);
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, {}, "User account has been permanently deleted")
+    );
+});
+
+const reactivateAccount = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  if (!isValidObjectId(userId)) {
+    throw new ApiError(400, "Invalid user Id");
+  }
+
+  const user = await User.findById(userId);
+
+  if (!user) throw new ApiError(404, "User not found");
+  if (!user.isDeleted) {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "Account is already active"));
+  }
+
+  user.isDeleted = false;
+  await user.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "Account reactivated successfully"));
+});
+
 export {
   registerUser,
   loginUser,
@@ -294,5 +501,13 @@ export {
   refreshAccessToken,
   changePassword,
   getCurrentUser,
+  getUserById,
   updateUserDetails,
+  blockUser,
+  unblockUser,
+  deactivateOwnAccount,
+  deleteOwnAccount,
+  deactivateUser,
+  deleteUser,
+  reactivateAccount,
 };

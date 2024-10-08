@@ -37,7 +37,44 @@ const userSchema = new Schema(
     password: {
       type: String,
       required: true,
+      minlength: [8, "Password of atleast 8 letters is required"],
     },
+
+    role: {
+      type: String,
+      default: "user",
+    },
+
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    },
+
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+
+    cart: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Product",
+      },
+    ],
+
+    address: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Address",
+      },
+    ],
+
+    wishlist: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Product",
+      },
+    ],
 
     refreshToken: {
       type: String,
