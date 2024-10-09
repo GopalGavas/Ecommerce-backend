@@ -1,7 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
-import { response } from "express";
 import fs from "fs";
-import { ApiError } from "./apiError";
+import { ApiError } from "./apiError.js";
 
 cloudinary.config({
   cloud_name: `${process.env.CLOUDINARY_CLOUD_NAME}`,
@@ -47,6 +46,4 @@ const deleteOnCloudinary = async (publicId, resource_type = "image") => {
   }
 };
 
-{
-  uploadOnCloudinary, deleteOnCloudinary;
-}
+export { uploadOnCloudinary, deleteOnCloudinary };
