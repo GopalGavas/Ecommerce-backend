@@ -132,8 +132,11 @@ const updateProductDetails = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Product not found");
   }
 
-  if (product.seller.toString() !== req.user?._id.toString()) {
-    throw new ApiError(401, "You are not authorized for this action");
+  if (
+    product.seller.toString() !== req.user?._id.toString() &&
+    req.user?.role !== "admin"
+  ) {
+    throw new ApiError(403, "You are not authorized for this action");
   }
 
   const updateProduct = await Product.findByIdAndUpdate(
@@ -174,7 +177,13 @@ const updateProductImages = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Error while uploading file  on cloudinary");
   }
 
-  const product = await Product.findById(prodId).select("productImages");
+  const product = await Product.findById(prodId).select("productImages seller");
+  if (
+    product.seller.toString() !== req.user?._id.toString() &&
+    req.user?.role !== "admin"
+  ) {
+    throw new ApiError(403, "You are unauthorized for this action");
+  }
   let productImages = product?.productImages || [];
 
   // {If fewer than 5 images, directly add the new image}
@@ -250,8 +259,11 @@ const deleteProduct = asyncHandler(async (req, res) => {
 
   let productImages = product.productImages;
 
-  if (product.seller.toString() !== req.user?._id.toString()) {
-    throw new ApiError(401, "You are not authorized for this action");
+  if (
+    product.seller.toString() !== req.user?._id.toString() &&
+    req.user?.role !== "admin"
+  ) {
+    throw new ApiError(403, "You are not authorized for this action");
   }
 
   const usersWithWishList = await User.find({ wishlist: prodId });
