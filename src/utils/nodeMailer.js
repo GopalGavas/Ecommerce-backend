@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
-import { ApiError } from "./apiError";
-import { ApiResponse } from "./apiResponse";
+import { ApiError } from "./apiError.js";
+import { ApiResponse } from "./apiResponse.js";
 
 const sendEmail = async (data, req, res) => {
   const transporter = nodemailer.createTransport({

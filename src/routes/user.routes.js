@@ -6,6 +6,7 @@ import {
   deactivateUser,
   deleteOwnAccount,
   deleteUser,
+  generateForgetPasswordToken,
   getCurrentUser,
   getUserById,
   loginUser,
@@ -32,6 +33,7 @@ router.route("/current-user").get(verifyJwt, getCurrentUser);
 router.route("/update-details").patch(verifyJwt, updateUserDetails);
 router.route("/deactivate").patch(verifyJwt, deactivateOwnAccount);
 router.route("/delete").delete(verifyJwt, deleteOwnAccount);
+router.route("/forget-password").post(verifyJwt, generateForgetPasswordToken);
 
 // "ADMIN ROUTES"
 router.route("/:userId").get(verifyJwt, isAdmin, getUserById);
