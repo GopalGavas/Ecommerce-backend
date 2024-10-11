@@ -7,7 +7,7 @@ import {
   uploadOnCloudinary,
 } from "../utils/cloudinary.js";
 import slugify from "slugify";
-import { isValidObjectId } from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 import { User } from "../models/user.model.js";
 
 const createProduct = asyncHandler(async (req, res) => {
@@ -96,12 +96,71 @@ const getProductById = asyncHandler(async (req, res) => {
 });
 
 const getAllProducts = asyncHandler(async (req, res) => {
-  const allProduct = await Product.find({});
+  const { page = 1, limit = 10, query, sortType, sortBy, userId } = req.query;
+
+  const pipeline = [];
+
+  // {TEXT SEARCH}
+  if (query) {
+    pipeline.push({
+      $search: {
+        index: "search-product",
+        text: {
+          query: query,
+          path: ["brand", "category", "title", "color", "price"],
+        },
+      },
+    });
+  }
+
+  // {FIlTER BY USERID IF PROVIDED}
+  if (userId) {
+    if (!isValidObjectId(userId)) {
+      throw new ApiError(400, "Invalid user Id");
+    }
+
+    pipeline.push({
+      $match: {
+        seller: new mongoose.Types.ObjectId(userId),
+      },
+    });
+  }
+
+  // {SORTING LOGIC}
+  if (sortBy && sortType) {
+    pipeline.push({
+      $sort: {
+        [sortBy]: sortType === "asc" ? 1 : -1,
+      },
+    });
+  } else {
+    pipeline.push({ $sort: { createdAt: -1 } });
+  }
+
+  // {Pagination logic: adding limit and skip for pagination AFTER sorting and matching}
+  const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+  pipeline.push({ $skip: skip }, { $limit: parseInt(limit, 10) });
+
+  const products = await Product.aggregate(pipeline);
+
+  // {NO OF PRODUCTS}
+  const totalProductsCount = await Product.aggregate([
+    ...pipeline,
+    { $count: "total" },
+  ]);
+  const totalProducts =
+    totalProductsCount.length > 0 ? totalProductsCount[0].total : 0;
+
+  const noOfPages = totalProducts > 0 ? Math.ceil(totalProducts / limit) : 0;
 
   return res
     .status(200)
     .json(
-      new ApiResponse(200, allProduct, "All Products fetched successfully")
+      new ApiResponse(
+        200,
+        { totalProducts, products, noOfPages },
+        "All Products fetched successfully"
+      )
     );
 });
 
