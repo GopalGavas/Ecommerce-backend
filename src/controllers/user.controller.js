@@ -3,7 +3,6 @@ import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { User } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
-import { sendEmail } from "../utils/nodeMailer.js";
 import { isValidObjectId } from "mongoose";
 
 const generateAccessAndRefreshToken = async (userId) => {
@@ -496,43 +495,6 @@ const reactivateAccount = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "Account reactivated successfully"));
 });
 
-const generateForgetPasswordToken = asyncHandler(async (req, res) => {
-  const { email } = req.body;
-
-  if (!email) {
-    throw new ApiError(400, "Email is required");
-  }
-
-  const user = await User.findOne({ email });
-
-  if (!user) {
-    throw new ApiError(
-      404,
-      "User not found or user of this email does not exists"
-    );
-  }
-
-  const token = await user.generateResetPasswordToken();
-
-  await user.save();
-  const redirectURL = `Follow the link to reset your Password, the link is valid for next 10 minutes. <a href='http://localhost:8080/api/v1/user/reset-password/${token}'>Click here</a>`;
-
-  const data = {
-    to: email,
-    subject: "Reset Password Link",
-    text: `Hello  ${user.fullName}, follow this link to reset your password , the link is available for next 10 mins and do not share this with anyone for your accounts security reasons`,
-    html: redirectURL,
-  };
-
-  await sendEmail(data);
-
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(200, token, "Reset password token generated successfully")
-    );
-});
-
 export {
   registerUser,
   loginUser,
@@ -549,5 +511,4 @@ export {
   deactivateUser,
   deleteUser,
   reactivateAccount,
-  generateForgetPasswordToken,
 };
