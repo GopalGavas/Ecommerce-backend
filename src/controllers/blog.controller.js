@@ -7,7 +7,7 @@ import {
   deleteFromCloudinary,
   uploadOnCloudinary,
 } from "../utils/cloudinary.js";
-import { isValidObjectId } from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 
 const createBlog = asyncHandler(async (req, res) => {
   const { title, description, category, content } = req.body;
@@ -152,6 +152,178 @@ const updateBlogImage = asyncHandler(async (req, res) => {
     );
 });
 
+const getBlogById = asyncHandler(async (req, res) => {
+  const { blogId } = req.params;
+
+  if (!isValidObjectId(blogId)) {
+    throw new ApiError(400, "Ivalid Object Id");
+  }
+
+  const blog = await Blog.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(blogId),
+      },
+    },
+    {
+      $lookup: {
+        from: "likes",
+        localField: "_id",
+        foreignField: "blog",
+        as: "likes",
+        pipeline: [
+          {
+            $lookup: {
+              from: "users",
+              localField: "likedBy",
+              foreignField: "_id",
+              as: "likedByDetails",
+            },
+          },
+          {
+            $unwind: "$likedByDetails",
+          },
+          {
+            $addFields: {
+              fullName: "$likedByDetails.fullName",
+            },
+          },
+          {
+            $project: {
+              _id: 0,
+              fullName: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "author",
+        foreignField: "_id",
+        as: "authorDetails",
+      },
+    },
+    {
+      $addFields: {
+        totalLikes: {
+          $size: "$likes",
+        },
+        authorDetails: {
+          $first: "$authorDetails",
+        },
+      },
+    },
+    {
+      $addFields: {
+        author: "$authorDetails.fullName",
+      },
+    },
+    {
+      $project: {
+        title: 1,
+        description: 1,
+        category: 1,
+        content: 1,
+        image: 1,
+        numViews: 1,
+        totalLikes: 1,
+        likes: 1,
+        author: 1,
+      },
+    },
+  ]);
+
+  // Handle case where the blog is not found
+  if (!blog || blog.length === 0) {
+    throw new ApiError(404, "Blog not found");
+  }
+
+  await Blog.findByIdAndUpdate(
+    blogId,
+    {
+      $inc: {
+        numViews: 1,
+      },
+    },
+    { new: true }
+  );
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, blog[0], "Blog fetched successfully"));
+});
+
+const getAllBlogs = asyncHandler(async (req, res) => {
+  const { page = 1, limit = 10 } = req.query;
+
+  const pageSize = parseInt(limit, 10);
+  const currentPage = parseInt(page, 10);
+
+  const skip = (currentPage - 1) * pageSize;
+
+  const blogs = await Blog.aggregate([
+    {
+      $lookup: {
+        from: "likes",
+        localField: "_id",
+        foreignField: "blog",
+        as: "likes",
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "author",
+        foreignField: "_id",
+        as: "authorDetails",
+      },
+    },
+    {
+      $addFields: {
+        totalLikes: {
+          $size: "$likes",
+        },
+        author: {
+          $first: "$authorDetails",
+        },
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        title: 1,
+        description: 1,
+        category: 1,
+        content: 1,
+        image: 1,
+        numViews: 1,
+        totalLikes: 1,
+        "author.fullName": 1,
+        "author._id": 1,
+      },
+    },
+    {
+      $skip: skip,
+    },
+    {
+      $limit: pageSize,
+    },
+  ]);
+
+  const totalBlogs = await Blog.countDocuments();
+
+  return res.status(200).json(
+    new ApiResponse(200, {
+      blogs,
+      currentPage,
+      totalPages: Math.ceil(totalBlogs / pageSize),
+      totalBlogs,
+    })
+  );
+});
+
 const deleteBlog = asyncHandler(async (req, res) => {
   const { blogId } = req.params;
 
@@ -189,4 +361,11 @@ const deleteBlog = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "Your blog is permanently deleted"));
 });
 
-export { createBlog, updateBlogDetails, updateBlogImage, deleteBlog };
+export {
+  createBlog,
+  updateBlogDetails,
+  updateBlogImage,
+  getBlogById,
+  getAllBlogs,
+  deleteBlog,
+};

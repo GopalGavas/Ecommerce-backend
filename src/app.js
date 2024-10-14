@@ -44,9 +44,11 @@ app.use(
 import userRouter from "./routes/user.routes.js";
 import productRouter from "./routes/product.routes.js";
 import blogRouter from "./routes/blog.routes.js";
+import likeRouter from "./routes/like.routes.js";
 
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/product", productRouter);
 app.use("/api/v1/blog", blogRouter);
+app.use("/api/v1/like", likeRouter);
 
 export { app };
