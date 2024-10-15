@@ -45,10 +45,12 @@ import userRouter from "./routes/user.routes.js";
 import productRouter from "./routes/product.routes.js";
 import blogRouter from "./routes/blog.routes.js";
 import likeRouter from "./routes/like.routes.js";
+import categoryRouter from "./routes/category.routes.js";
 
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/product", productRouter);
 app.use("/api/v1/blog", blogRouter);
 app.use("/api/v1/like", likeRouter);
+app.use("/api/v1/categories", categoryRouter);
 
 export { app };
