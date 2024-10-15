@@ -84,14 +84,14 @@ const deleteCategory = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "Category deleted permanently"));
 });
 
-const getCategoryById = asyncHandler(async (req, res) => {
-  const { catId } = req.params;
+const getCategoryBySlug = asyncHandler(async (req, res) => {
+  const { slug } = req.params;
 
-  if (!isValidObjectId(catId)) {
-    throw new ApiError(400, "Invalid category Id");
+  if (!slug) {
+    throw new ApiError(400, "Category slug is required");
   }
 
-  const category = await Category.findById(catId); // Fetch category by ID
+  const category = await Category.findOne({ slug }); // Fetch category by ID
 
   if (!category) {
     throw new ApiError(404, "Category not found");
@@ -116,6 +116,6 @@ export {
   createCategory,
   updateCategory,
   deleteCategory,
-  getCategoryById,
+  getCategoryBySlug,
   getAllCategories,
 };
