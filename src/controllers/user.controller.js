@@ -2,6 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { User } from "../models/user.model.js";
+import { Product } from "../models/product.model.js";
 import jwt from "jsonwebtoken";
 import { isValidObjectId } from "mongoose";
 
@@ -307,6 +308,64 @@ const updateUserDetails = asyncHandler(async (req, res) => {
     );
 });
 
+const toggleWishList = asyncHandler(async (req, res) => {
+  const { prodId } = req.params;
+
+  if (!isValidObjectId(prodId)) {
+    throw new ApiError(400, "Invalid product Id");
+  }
+
+  const product = await Product.findById(prodId);
+
+  if (!product) {
+    throw new ApiError(404, "Product not found");
+  }
+
+  const user = await User.findById(req.user?._id);
+  const inWishList = user.wishlist.includes(prodId);
+
+  if (inWishList) {
+    user.wishlist = user.wishlist.filter(
+      (id) => id.toString() !== prodId.toString()
+    );
+
+    await user.save();
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          { prodId, inWishList: false },
+          "Product removed from wishlist"
+        )
+      );
+  } else {
+    user.wishlist.push(prodId);
+    await user.save();
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          { prodId, inWishList: true },
+          "Product added to wishlist"
+        )
+      );
+  }
+});
+
+const getWishList = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user?._id).populate({
+    path: "wishlist",
+    select: "title price brand",
+  });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user.wishlist, "Wishlist fetched successfully"));
+});
+
+////////////// "ADMIN RELATED ACTIONS AND ACCOUNT HOLDERS ACTIONS"////////////////
 const blockUser = asyncHandler(async (req, res) => {
   const { userId } = req.params;
 
@@ -504,6 +563,8 @@ export {
   getCurrentUser,
   getUserById,
   updateUserDetails,
+  toggleWishList,
+  getWishList,
   blockUser,
   unblockUser,
   deactivateOwnAccount,

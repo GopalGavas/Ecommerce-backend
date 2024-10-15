@@ -8,11 +8,13 @@ import {
   deleteUser,
   getCurrentUser,
   getUserById,
+  getWishList,
   loginUser,
   logoutUser,
   reactivateAccount,
   refreshAccessToken,
   registerUser,
+  toggleWishList,
   unblockUser,
   updateUserDetails,
 } from "../controllers/user.controller.js";
@@ -32,6 +34,8 @@ router.route("/current-user").get(verifyJwt, getCurrentUser);
 router.route("/update-details").patch(verifyJwt, updateUserDetails);
 router.route("/deactivate").patch(verifyJwt, deactivateOwnAccount);
 router.route("/delete").delete(verifyJwt, deleteOwnAccount);
+router.route("/wishlist/:prodId").post(verifyJwt, toggleWishList);
+router.route("/wishlist").get(verifyJwt, getWishList);
 
 // "ADMIN ROUTES"
 router.route("/:userId").get(verifyJwt, isAdmin, getUserById);
