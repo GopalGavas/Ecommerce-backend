@@ -5,6 +5,7 @@ import {
   deleteProduct,
   getAllProducts,
   getProductById,
+  productRating,
   updateProductDetails,
   updateProductImages,
 } from "../controllers/product.controller.js";
@@ -29,6 +30,8 @@ router.route("/:prodId/update-details").patch(updateProductDetails);
 router
   .route("/:prodId/update-productImages")
   .patch(upload.fields([{ name: "productImages" }]), updateProductImages);
+
+router.route("/:prodId/rating").post(productRating);
 router.route("/:prodId/delete").delete(deleteProduct);
 
 // Admin routes (admins can perform these actions on any product)

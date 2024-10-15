@@ -2,6 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { Product } from "../models/product.model.js";
+import { Category } from "../models/category.model.js";
 import {
   deleteFromCloudinary,
   uploadOnCloudinary,
@@ -44,13 +45,19 @@ const createProduct = asyncHandler(async (req, res) => {
   if (existingProduct) {
     slug = `${slug}-${Date.now()}`; // Append timestamp to slug if a product with the same title exists
   }
+
+  const categoryData = await Category.findOne({ slug: category });
+  if (!categoryData) {
+    throw new ApiError(400, "Invalid category slug");
+  }
+
   const product = await Product.create({
     title,
     slug,
     description,
     price,
     quantity,
-    category,
+    category: categoryData.slug,
     brand,
     color,
     productImages,
@@ -198,6 +205,15 @@ const updateProductDetails = asyncHandler(async (req, res) => {
     throw new ApiError(403, "You are not authorized for this action");
   }
 
+  let categorySlug;
+  if (category) {
+    const categoryData = await Category.findOne({ slug: category });
+    if (!categoryData) {
+      throw new ApiError(400, "Invalid category slug");
+    }
+    categorySlug = categoryData.slug; // Use the category slug for update
+  }
+
   const updateProduct = await Product.findByIdAndUpdate(
     product._id,
     {
@@ -205,7 +221,7 @@ const updateProductDetails = asyncHandler(async (req, res) => {
       ...(description && { description }),
       ...(price && { price }),
       ...(quantity && { quantity }),
-      ...(category && { category }),
+      ...(category && { category: categorySlug }),
       ...(brand && { brand }),
       ...(color && { color }),
     },
@@ -303,6 +319,60 @@ const updateProductImages = asyncHandler(async (req, res) => {
     );
 });
 
+const productRating = asyncHandler(async (req, res) => {
+  const { prodId } = req.params;
+  const { stars, comment } = req.body;
+
+  if (!isValidObjectId(prodId)) {
+    throw new ApiError(400, "Invalid Product Id");
+  }
+
+  if (stars < 0 || stars > 5) {
+    throw new ApiError(400, "Stars rating should be between 0 and 5");
+  }
+
+  const product = await Product.findById(prodId);
+
+  if (!product) {
+    throw new ApiError(404, "Product not found");
+  }
+
+  const existingRating = product.ratings.find(
+    (rating) => rating.postedBy.toString() === req.user?._id.toString()
+  );
+
+  if (existingRating) {
+    existingRating.stars = stars;
+    existingRating.comment = comment;
+  } else {
+    product.ratings.push({ stars, comment, postedBy: req.user?._id });
+  }
+
+  const totalStars = product.ratings.reduce(
+    (acc, rating) => acc + rating.stars,
+    0
+  );
+
+  product.totalRatings =
+    product.ratings.length > 0
+      ? (totalStars / product.ratings.length).toFixed(2)
+      : 0;
+
+  await product.save();
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        totalRatings: product.ratings.length,
+        overallRating: product.totalRatings,
+        ratings: product.ratings,
+      },
+      "Product rated successfully"
+    )
+  );
+});
+
 const deleteProduct = asyncHandler(async (req, res) => {
   const { prodId } = req.params;
 
@@ -359,5 +429,6 @@ export {
   getAllProducts,
   updateProductDetails,
   updateProductImages,
+  productRating,
   deleteProduct,
 };

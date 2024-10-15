@@ -8,6 +8,7 @@ import {
   uploadOnCloudinary,
 } from "../utils/cloudinary.js";
 import mongoose, { isValidObjectId } from "mongoose";
+import { Like } from "../models/likes.model.js";
 
 const createBlog = asyncHandler(async (req, res) => {
   const { title, description, category, content } = req.body;
@@ -355,6 +356,10 @@ const deleteBlog = asyncHandler(async (req, res) => {
   }
 
   await deleteFromCloudinary(publicIdImage);
+
+  await Like.deleteMany({
+    blog: blogId,
+  });
 
   return res
     .status(200)

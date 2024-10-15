@@ -61,7 +61,8 @@ const productSchema = new Schema(
 
     ratings: [
       {
-        star: { type: Number, min: 0, max: 5 },
+        stars: { type: Number, min: 0, max: 5 },
+        comment: String,
         postedBy: {
           type: Schema.Types.ObjectId,
           ref: "User",
@@ -69,6 +70,11 @@ const productSchema = new Schema(
         postedAt: { type: Date, default: Date.now },
       },
     ],
+
+    totalRatings: {
+      type: String,
+      default: 0,
+    },
 
     seller: {
       type: Schema.Types.ObjectId,
