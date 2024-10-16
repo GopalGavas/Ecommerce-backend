@@ -15,6 +15,7 @@ import {
   reactivateAccount,
   refreshAccessToken,
   registerUser,
+  saveAddress,
   toggleWishList,
   unblockUser,
   updateUserDetails,
@@ -34,6 +35,7 @@ router.use(verifyJwt);
 router.route("/logout").post(logoutUser);
 router.route("/refresh-token").post(refreshAccessToken);
 router.route("/change-password").post(changePassword);
+router.route("/address").post(saveAddress);
 router.route("/current-user").get(getCurrentUser);
 router.route("/:userId").get(getUserById);
 router.route("/update-details").patch(updateUserDetails);

@@ -226,6 +226,42 @@ const changePassword = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "password changed successfully"));
 });
 
+const saveAddress = asyncHandler(async (req, res) => {
+  const { address, addressId } = req.body;
+
+  if (
+    !address ||
+    !address.type ||
+    !address.street ||
+    !address.city ||
+    !address.code
+  ) {
+    throw new ApiError(400, "Your complete address is required");
+  }
+
+  const user = await User.findById(req.user?._id);
+
+  if (addressId) {
+    const addressIndex = user.addresses.findIndex(
+      (addr) => addr._id.toString() === addressId
+    );
+
+    if (addressIndex === -1) {
+      throw new ApiError(404, "address not found");
+    }
+
+    user.addresses[addressIndex] = address;
+  } else {
+    user.addresses.push(address);
+  }
+
+  await user.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user.addresses, "address saved successfully"));
+});
+
 const getCurrentUser = asyncHandler(async (req, res) => {
   return res
     .status(200)
@@ -612,6 +648,7 @@ export {
   logoutUser,
   refreshAccessToken,
   changePassword,
+  saveAddress,
   getCurrentUser,
   getUserById,
   updateUserDetails,

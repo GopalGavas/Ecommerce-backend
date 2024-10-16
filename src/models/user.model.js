@@ -63,10 +63,12 @@ const userSchema = new Schema(
       },
     ],
 
-    address: [
+    addresses: [
       {
-        type: Schema.Types.ObjectId,
-        ref: "Address",
+        type: { type: String, enum: ["home", "work", "other"], required: true },
+        street: { type: String, required: true },
+        city: { type: String, required: true },
+        code: { type: String, required: [true, "Enter zip/pin code"] },
       },
     ],
 
