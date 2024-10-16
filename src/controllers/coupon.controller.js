@@ -66,6 +66,20 @@ const updateCoupon = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Coupon not found");
   }
 
+  if (name && name !== coupon.name) {
+    const existingCoupon = await Coupon.findOne({ name });
+
+    if (existingCoupon) {
+      throw new ApiError(400, "Coupon name already exists");
+    }
+  }
+
+  const expiryDate = new Date(expiry);
+  expiryDate.setHours(23, 59, 59, 299);
+  if (expiryDate <= Date.now()) {
+    throw new ApiError(400, "Expiry date should be in future");
+  }
+
   const updatedCoupon = await Coupon.findByIdAndUpdate(
     couponId,
     {
@@ -98,19 +112,15 @@ const deleteCoupon = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Coupon not found");
   }
 
-  const deleteCoupon = await Coupon.findByIdAndDelete(couponId);
-
-  if (!deleteCoupon) {
-    throw new ApiError(500, "Something went wrong while deleting the coupon");
-  }
+  await Coupon.findByIdAndDelete(couponId);
 
   return res
     .status(200)
-    .json(new ApiResponse(200, "Coupon deleted successfully"));
+    .json(new ApiResponse(200, null, "Coupon deleted successfully"));
 });
 
 const getAllCoupons = asyncHandler(async (req, res) => {
-  const coupons = await Coupon.find({});
+  const coupons = await Coupon.find({}).lean();
 
   return res
     .status(200)

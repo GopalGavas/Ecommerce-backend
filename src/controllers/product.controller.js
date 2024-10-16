@@ -91,7 +91,44 @@ const getProductById = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid Product Id");
   }
 
-  const product = await Product.findById(prodId);
+  const product = await Product.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(prodId),
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "seller",
+        foreignField: "_id",
+        as: "sellerDetails",
+      },
+    },
+    {
+      $addFields: {
+        seller: {
+          $first: "$sellerDetails",
+        },
+      },
+    },
+    {
+      $project: {
+        title: 1,
+        slug: 1,
+        description: 1,
+        price: 1,
+        brand: 1,
+        category: 1,
+        productImages: 1,
+        ratings: 1,
+        totalRatings: 1,
+        "seller._id": 1,
+        "seller.firstName": 1,
+        "seller.email": 1,
+      },
+    },
+  ]);
 
   if (!product) {
     throw new ApiError(404, "Product not found");
@@ -99,7 +136,7 @@ const getProductById = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, product, "Product fetched successfully"));
+    .json(new ApiResponse(200, product[0], "Product fetched successfully"));
 });
 
 const getAllProducts = asyncHandler(async (req, res) => {
