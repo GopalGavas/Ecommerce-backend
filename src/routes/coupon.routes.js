@@ -9,11 +9,9 @@ import {
 
 const router = Router();
 
-router.use(verifyJwt, isAdmin);
+router.use(verifyJwt, isAdmin); // Apply middleware to all routes
 
-router.route("/").post(createCoupon);
-router.route("/:couponId").patch(updateCoupon);
-router.route("/").get(getAllCoupons);
-router.route("/:couponId").delete(deleteCoupon);
+router.route("/").post(createCoupon).get(getAllCoupons);
+router.route("/:couponId").patch(updateCoupon).delete(deleteCoupon);
 
 export default router;

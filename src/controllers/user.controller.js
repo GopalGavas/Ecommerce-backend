@@ -366,6 +366,58 @@ const getWishList = asyncHandler(async (req, res) => {
 });
 
 ////////////// "ADMIN RELATED ACTIONS AND ACCOUNT HOLDERS ACTIONS"////////////////
+const loginAdmin = asyncHandler(async (req, res) => {
+  const { email, phoneNo, password } = req.body;
+
+  if (!email?.trim() && !phoneNo?.trim()) {
+    throw new ApiError("Email or phoneNo is required for login");
+  }
+
+  const admin = await User.findOne({
+    $or: [{ email }, { phoneNo }],
+  }).select("-refreshToken");
+
+  if (!admin) {
+    throw new ApiError(404, "Admin not found / Admin does not exists");
+  }
+
+  if (admin.role !== "admin")
+    throw new ApiError(401, "Warning!! Only Admins can login here");
+
+  const verfiyPassword = await admin.comparePassword(password);
+
+  if (!verfiyPassword) {
+    throw new ApiError(400, "Invalid credentials");
+  }
+
+  const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
+    admin?._id
+  );
+
+  admin.refreshToken = refreshToken;
+  await admin.save();
+
+  admin.refreshToken = undefined;
+  admin.password = undefined;
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new ApiResponse(
+        200,
+        { admin, accessToken, refreshToken },
+        "Admin logged In successfully"
+      )
+    );
+});
+
 const blockUser = asyncHandler(async (req, res) => {
   const { userId } = req.params;
 
@@ -565,6 +617,7 @@ export {
   updateUserDetails,
   toggleWishList,
   getWishList,
+  loginAdmin,
   blockUser,
   unblockUser,
   deactivateOwnAccount,

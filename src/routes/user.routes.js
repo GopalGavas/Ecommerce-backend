@@ -9,6 +9,7 @@ import {
   getCurrentUser,
   getUserById,
   getWishList,
+  loginAdmin,
   loginUser,
   logoutUser,
   reactivateAccount,
@@ -26,25 +27,34 @@ const router = Router();
 router.route("/register").post(registerUser);
 router.route("/login").post(loginUser);
 
+// {USE MIDDLEWARE}
+router.use(verifyJwt);
+
 // "SAFE ROUTES"
-router.route("/logout").post(verifyJwt, logoutUser);
-router.route("/refresh-token").post(verifyJwt, refreshAccessToken);
-router.route("/change-password").post(verifyJwt, changePassword);
-router.route("/current-user").get(verifyJwt, getCurrentUser);
-router.route("/update-details").patch(verifyJwt, updateUserDetails);
-router.route("/deactivate").patch(verifyJwt, deactivateOwnAccount);
-router.route("/delete").delete(verifyJwt, deleteOwnAccount);
-router.route("/wishlist/:prodId").post(verifyJwt, toggleWishList);
-router.route("/wishlist").get(verifyJwt, getWishList);
+router.route("/logout").post(logoutUser);
+router.route("/refresh-token").post(refreshAccessToken);
+router.route("/change-password").post(changePassword);
+router.route("/current-user").get(getCurrentUser);
+router.route("/:userId").get(getUserById);
+router.route("/update-details").patch(updateUserDetails);
+router.route("/deactivate").patch(deactivateOwnAccount);
+router.route("/delete").delete(deleteOwnAccount);
+router.route("/wishlist/:prodId").post(toggleWishList);
+router.route("/wishlist").get(getWishList);
+
+/////////////// 'ADMIN FUNCTIONALITY' ////////////////////
+// "ADMIN LOGIN"
+router.route("/admin/login").post(loginAdmin);
+
+// {ADMIN MIDDLEWARE}
+router.use(isAdmin);
 
 // "ADMIN ROUTES"
-router.route("/:userId").get(verifyJwt, isAdmin, getUserById);
-router.route("/:userId/block").patch(verifyJwt, isAdmin, blockUser);
-router.route("/:userId/unblock").patch(verifyJwt, isAdmin, unblockUser);
-router.route("/:userId/deactivate").patch(verifyJwt, isAdmin, deactivateUser);
-router.route("/:userId/delete").delete(verifyJwt, isAdmin, deleteUser);
-router
-  .route("/:userId/reactivate")
-  .patch(verifyJwt, isAdmin, reactivateAccount);
+router.route("/admin/:userId").get(getUserById);
+router.route("/admin/:userId/block").patch(blockUser);
+router.route("/admin/:userId/unblock").patch(unblockUser);
+router.route("/admin/:userId/deactivate").patch(deactivateUser);
+router.route("/admin/:userId/delete").delete(deleteUser);
+router.route("/admin/:userId/reactivate").patch(reactivateAccount);
 
 export default router;

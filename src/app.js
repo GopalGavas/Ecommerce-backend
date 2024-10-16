@@ -48,11 +48,11 @@ import likeRouter from "./routes/like.routes.js";
 import categoryRouter from "./routes/category.routes.js";
 import couponRouter from "./routes/coupon.routes.js";
 
-app.use("/api/v1/user", userRouter);
-app.use("/api/v1/product", productRouter);
-app.use("/api/v1/blog", blogRouter);
-app.use("/api/v1/like", likeRouter);
+app.use("/api/v1/users", userRouter);
+app.use("/api/v1/products", productRouter);
+app.use("/api/v1/blogs", blogRouter);
+app.use("/api/v1/likes", likeRouter);
 app.use("/api/v1/categories", categoryRouter);
-app.use("/api/v1/coupon", couponRouter);
+app.use("/api/v1/coupons", couponRouter);
 
 export { app };

@@ -10,10 +10,15 @@ import {
 
 const router = Router();
 
-router.route("/").post(verifyJwt, isAdmin, createCategory);
-router.route("/:catId").patch(verifyJwt, isAdmin, updateCategory);
-router.route("/:catId").delete(verifyJwt, isAdmin, deleteCategory);
-router.route("/:slug").get(verifyJwt, getCategoryBySlug);
-router.route("/").get(verifyJwt, getAllCategories);
+router.use(verifyJwt);
+
+router.route("/").post(isAdmin, createCategory).get(getAllCategories);
+
+router
+  .route("/:catId")
+  .patch(isAdmin, updateCategory)
+  .delete(isAdmin, deleteCategory);
+
+router.route("/:slug").get(getCategoryBySlug);
 
 export default router;
