@@ -15,6 +15,11 @@ const orderSchema = new Schema(
     paymentIntent: {
       type: Object, // If you're using services like Stripe, you can map more specific fields here
     },
+    paymentMethod: {
+      type: String,
+      enum: ["Card", "COD"], // Define the available payment methods
+      default: "Card",
+    },
     paymentStatus: {
       type: String,
       enum: ["Pending", "Completed", "Failed"],

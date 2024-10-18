@@ -276,7 +276,7 @@ const getCart = asyncHandler(async (req, res) => {
   ]);
 
   if (!cart || cart.length === 0) {
-    throw new ApiError(404, "Cart not found");
+    throw new ApiError(400, "Your Cart is empty");
   }
 
   return res
