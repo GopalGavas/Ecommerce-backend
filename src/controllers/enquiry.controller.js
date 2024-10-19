@@ -52,7 +52,7 @@ const createEnquiry = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, enquiry, "enquiry created successfully"));
 });
 
-const updatedEnquiry = asyncHandler(async (req, res) => {
+const updateEnquiry = asyncHandler(async (req, res) => {
   const { enquiryId } = req.params;
   const { prodId, orderId, message, enquiryType } = req.body;
 
@@ -122,7 +122,36 @@ const respondToEnquiry = asyncHandler(async (req, res) => {
 
   await enquiry.save();
 
-  return res.status(200, enquiry, "Enquiry resolved successfully");
+  return res
+    .status(200)
+    .json(new ApiResponse(200, enquiry, "Enquiry resolved successfully"));
 });
 
-export { createEnquiry, updatedEnquiry, respondToEnquiry };
+const deleteEnquiry = asyncHandler(async (req, res) => {
+  const { enquiryId } = req.params;
+
+  if (!isValidObjectId) {
+    throw new ApiError(400, "Invalid Enquiry Id");
+  }
+
+  const enquiry = await Enquiry.findById(enquiryId);
+
+  if (!enquiry) {
+    throw new ApiError(404, "Enquiry not found");
+  }
+
+  if (
+    enquiry.user.toString() !== req.user?._id.toString() &&
+    req.user.role !== "admin"
+  ) {
+    throw new ApiError(401, "You are not authorized to delete this enquiry");
+  }
+
+  await Enquiry.findByIdAndDelete(enquiryId);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "Enquiry deleted successfully"));
+});
+
+export { createEnquiry, updateEnquiry, respondToEnquiry, deleteEnquiry };
