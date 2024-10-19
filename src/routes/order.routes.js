@@ -22,7 +22,6 @@ router.route("/:orderId/track").get(trackOrder);
 
 // 'Admin Routes'
 router.route("/admin/all").get(isAdmin, getAllOrders);
-router.route("/admin/:orderId").get(isAdmin, getOrderById);
 router.route("/admin/:orderId/status").patch(isAdmin, updateOrderStatus);
 router
   .route("/admin/:orderId/payment-status/cod")
