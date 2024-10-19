@@ -28,6 +28,9 @@ const router = Router();
 router.route("/register").post(registerUser);
 router.route("/login").post(loginUser);
 
+// "ADMIN LOGIN"
+router.route("/admin/login").post(loginAdmin);
+
 // {USE MIDDLEWARE}
 router.use(verifyJwt);
 
@@ -45,8 +48,6 @@ router.route("/wishlist/:prodId").post(toggleWishList);
 router.route("/wishlist").get(getWishList);
 
 /////////////// 'ADMIN FUNCTIONALITY' ////////////////////
-// "ADMIN LOGIN"
-router.route("/admin/login").post(loginAdmin);
 
 // {ADMIN MIDDLEWARE}
 router.use(isAdmin);

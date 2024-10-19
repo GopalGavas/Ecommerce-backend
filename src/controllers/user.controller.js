@@ -405,42 +405,56 @@ const getWishList = asyncHandler(async (req, res) => {
 const loginAdmin = asyncHandler(async (req, res) => {
   const { email, phoneNo, password } = req.body;
 
-  if (!email?.trim() && !phoneNo?.trim()) {
-    throw new ApiError("Email or phoneNo is required for login");
+  // Ensure email or phone number is provided and not empty
+  if ((!email || !email.trim()) && (!phoneNo || !phoneNo.trim())) {
+    throw new ApiError(400, "Email or phone number is required for login");
   }
 
+  // Ensure password is provided
+  if (!password || !password.trim()) {
+    throw new ApiError(400, "Password is required for login");
+  }
+
+  // Find admin by email or phone number
   const admin = await User.findOne({
     $or: [{ email }, { phoneNo }],
   }).select("-refreshToken");
 
   if (!admin) {
-    throw new ApiError(404, "Admin not found / Admin does not exists");
+    throw new ApiError(404, "Admin not found / Admin does not exist");
   }
 
-  if (admin.role !== "admin")
+  // Check if the user has admin privileges
+  if (admin.role !== "admin") {
     throw new ApiError(401, "Warning!! Only Admins can login here");
+  }
 
-  const verfiyPassword = await admin.comparePassword(password);
+  // Verify password
+  const verifyPassword = await admin.comparePassword(password);
 
-  if (!verfiyPassword) {
+  if (!verifyPassword) {
     throw new ApiError(400, "Invalid credentials");
   }
 
+  // Generate access and refresh tokens
   const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
-    admin?._id
+    admin._id
   );
 
+  // Save refresh token in the admin's document
   admin.refreshToken = refreshToken;
   await admin.save();
 
+  // Remove sensitive data before sending the response
   admin.refreshToken = undefined;
   admin.password = undefined;
 
   const options = {
     httpOnly: true,
-    secure: true,
+    secure: true, // Make sure this is only used in a production environment (e.g., behind HTTPS)
   };
 
+  // Return response with cookies and data
   return res
     .status(200)
     .cookie("accessToken", accessToken, options)
@@ -449,7 +463,7 @@ const loginAdmin = asyncHandler(async (req, res) => {
       new ApiResponse(
         200,
         { admin, accessToken, refreshToken },
-        "Admin logged In successfully"
+        "Admin logged in successfully"
       )
     );
 });

@@ -27,9 +27,9 @@ const orderSchema = new Schema(
     },
     orderStatus: {
       type: String,
-      default: "Not Processed",
+      default: "Not-Processed",
       enum: [
-        "Not Processed",
+        "Not-Processed",
         "Processed",
         "Dispatched",
         "Cancelled",
