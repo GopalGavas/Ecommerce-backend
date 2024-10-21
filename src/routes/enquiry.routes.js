@@ -3,6 +3,7 @@ import { isAdmin, verifyJwt } from "../middleware/auth.middleware.js";
 import {
   createEnquiry,
   deleteEnquiry,
+  getAllEnquiries,
   getEnquiryById,
   respondToEnquiry,
   updateEnquiry,
@@ -20,6 +21,7 @@ router.route("/:enquiryId").get(getEnquiryById);
 // "ADMIN ROUTES"
 router.use(isAdmin);
 
+router.route("/admin/all").get(getAllEnquiries);
 router.route("/admin/:enquiryId").patch(respondToEnquiry);
 router.route("/admin/:enquiryId").delete(deleteEnquiry);
 

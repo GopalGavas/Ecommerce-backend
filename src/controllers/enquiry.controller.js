@@ -191,7 +191,7 @@ const getEnquiryById = asyncHandler(async (req, res) => {
         message: 1,
         status: 1,
         enquiryType: 1,
-        userDetail: { _id: 1, name: 1, email: 1 },
+        userDetail: { _id: 1, fullName: 1, email: 1, phoneNo: 1 },
         productDetail: {
           _id: 1,
           title: 1,
@@ -218,6 +218,72 @@ const getEnquiryById = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new ApiResponse(200, enquiry, "Enquiry fetched successfully"));
+});
+
+const getAllEnquiries = asyncHandler(async (req, res) => {
+  const {
+    enquiryType,
+    status,
+    page = 1,
+    limit = 10,
+    sortType,
+    sortBy,
+  } = req.query;
+
+  const pipeline = [];
+
+  const matchCondition = {};
+
+  if (enquiryType) {
+    matchCondition.enquiryType = enquiryType;
+  }
+
+  if (status) {
+    if (!["pending", "resolved", "closed"].includes(status)) {
+      throw new ApiError(400, "Invalid status provided");
+    } else {
+      matchCondition.status = status;
+    }
+  }
+
+  if (Object.keys(matchCondition).length > 0) {
+    pipeline.push({ $match: matchCondition });
+  }
+
+  if (sortBy && sortType) {
+    pipeline.push({
+      $sort: {
+        [sortBy]: sortType === "asc" ? -1 : 1,
+      },
+    });
+  } else {
+    pipeline.push({ $sort: { createdAt: -1 } });
+  }
+
+  const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+  pipeline.push({ $skip: skip }, { $limit: parseInt(limit, 10) });
+
+  const enquiries = await Enquiry.aggregate(pipeline);
+
+  const totalEnquiriesCount = await Enquiry.aggregate([
+    { $match: matchCondition },
+    { $count: "total" },
+  ]);
+
+  const totalEnquiries =
+    totalEnquiriesCount.length > 0 ? totalEnquiriesCount[0].total : 0;
+
+  const noOfPages = totalEnquiries > 0 ? Math.ceil(totalEnquiries / limit) : 0;
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { totalEnquiriesCount, enquiries, noOfPages },
+        "All enquiries fetched successfully"
+      )
+    );
 });
 
 const deleteEnquiry = asyncHandler(async (req, res) => {
@@ -252,5 +318,6 @@ export {
   updateEnquiry,
   respondToEnquiry,
   getEnquiryById,
+  getAllEnquiries,
   deleteEnquiry,
 };
