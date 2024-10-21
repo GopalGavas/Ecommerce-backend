@@ -3,6 +3,7 @@ import { isAdmin, verifyJwt } from "../middleware/auth.middleware.js";
 import {
   createEnquiry,
   deleteEnquiry,
+  getEnquiryById,
   respondToEnquiry,
   updateEnquiry,
 } from "../controllers/enquiry.controller.js";
@@ -14,6 +15,7 @@ router.use(verifyJwt);
 router.route("/").post(createEnquiry);
 router.route("/:enquiryId/update").patch(updateEnquiry);
 router.route("/:enquiryId").delete(deleteEnquiry);
+router.route("/:enquiryId").get(getEnquiryById);
 
 // "ADMIN ROUTES"
 router.use(isAdmin);

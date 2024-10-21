@@ -4,7 +4,7 @@ import { ApiResponse } from "../utils/apiResponse.js";
 import { Enquiry } from "../models/enquiry.model.js";
 import { Product } from "../models/product.model.js";
 import { Order } from "../models/order.model.js";
-import { isValidObjectId } from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 
 const createEnquiry = asyncHandler(async (req, res) => {
   const { prodId, orderId, message, enquiryType } = req.body;
@@ -127,6 +127,99 @@ const respondToEnquiry = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, enquiry, "Enquiry resolved successfully"));
 });
 
+const getEnquiryById = asyncHandler(async (req, res) => {
+  const { enquiryId } = req.params;
+
+  if (!isValidObjectId(enquiryId)) {
+    throw new ApiError(400, "Invalid Enquiry Id");
+  }
+
+  const enquiry = await Enquiry.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(enquiryId),
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "user",
+        foreignField: "_id",
+        as: "userDetails",
+      },
+    },
+    {
+      $lookup: {
+        from: "products",
+        localField: "product",
+        foreignField: "_id",
+        as: "productDetails",
+      },
+    },
+    {
+      $lookup: {
+        from: "orders",
+        localField: "order",
+        foreignField: "_id",
+        as: "orderDetails",
+      },
+    },
+    {
+      $addFields: {
+        userDetail: {
+          $first: "$userDetails",
+        },
+        productDetail: {
+          $cond: {
+            if: { $gt: [{ $size: "$productDetails" }, 0] },
+            then: { $first: "$productDetails" },
+            else: null,
+          },
+        },
+        orderDetail: {
+          $cond: {
+            if: { $gt: [{ $size: "$orderDetails" }, 0] },
+            then: { $first: "$orderDetails" },
+            else: null,
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        message: 1,
+        status: 1,
+        enquiryType: 1,
+        userDetail: { _id: 1, name: 1, email: 1 },
+        productDetail: {
+          _id: 1,
+          title: 1,
+          price: 1,
+          brand: 1,
+          totalRatings: 1,
+        },
+        orderDetail: {
+          _id: 1,
+          orderStatus: 1,
+          totalAmount: 1,
+          paymentStatus: 1,
+        },
+        createdAt: 1,
+        updatedAt: 1,
+      },
+    },
+  ]);
+
+  if (!enquiry || enquiry.length === 0) {
+    throw new ApiError(404, "Enquiry not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, enquiry, "Enquiry fetched successfully"));
+});
+
 const deleteEnquiry = asyncHandler(async (req, res) => {
   const { enquiryId } = req.params;
 
@@ -154,4 +247,10 @@ const deleteEnquiry = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "Enquiry deleted successfully"));
 });
 
-export { createEnquiry, updateEnquiry, respondToEnquiry, deleteEnquiry };
+export {
+  createEnquiry,
+  updateEnquiry,
+  respondToEnquiry,
+  getEnquiryById,
+  deleteEnquiry,
+};
