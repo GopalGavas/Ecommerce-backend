@@ -3,7 +3,9 @@ import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { User } from "../models/user.model.js";
 import { Product } from "../models/product.model.js";
+import { sendEmail } from "../utils/mail.js";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import { isValidObjectId } from "mongoose";
 
 const generateAccessAndRefreshToken = async (userId) => {
@@ -401,21 +403,82 @@ const getWishList = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user.wishlist, "Wishlist fetched successfully"));
 });
 
+const generateForgetPasswordToken = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    throw new ApiError(400, "Email is required");
+  }
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const token = await user.generateResetPasswordToken();
+  await user.save();
+
+  const resetUrl = `Hi Please follow this link to reset your password , it is only valid for next 10 minutes <a href="http://localhost:8080/api/v1/users/reset-password/${token}">Click here</a>`;
+  await sendEmail(
+    email,
+    "Forgot Password Link",
+    `Hey, ${user.fullName}`,
+    resetUrl
+  );
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        token,
+        "Forgot password token generated successfully"
+      )
+    );
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+  const { newPassword } = req.body;
+  const { token } = req.params;
+
+  if (!newPassword) {
+    throw new ApiError(400, "New Password is required to reset password");
+  }
+
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    throw new ApiError(404, "Invalid or  expired token");
+  }
+
+  user.password = newPassword;
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+  await user.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Password Reset successfull"));
+});
+
 ////////////// "ADMIN RELATED ACTIONS AND ACCOUNT HOLDERS ACTIONS"////////////////
 const loginAdmin = asyncHandler(async (req, res) => {
   const { email, phoneNo, password } = req.body;
 
-  // Ensure email or phone number is provided and not empty
   if ((!email || !email.trim()) && (!phoneNo || !phoneNo.trim())) {
     throw new ApiError(400, "Email or phone number is required for login");
   }
 
-  // Ensure password is provided
   if (!password || !password.trim()) {
     throw new ApiError(400, "Password is required for login");
   }
 
-  // Find admin by email or phone number
   const admin = await User.findOne({
     $or: [{ email }, { phoneNo }],
   }).select("-refreshToken");
@@ -424,37 +487,31 @@ const loginAdmin = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Admin not found / Admin does not exist");
   }
 
-  // Check if the user has admin privileges
   if (admin.role !== "admin") {
     throw new ApiError(401, "Warning!! Only Admins can login here");
   }
 
-  // Verify password
   const verifyPassword = await admin.comparePassword(password);
 
   if (!verifyPassword) {
     throw new ApiError(400, "Invalid credentials");
   }
 
-  // Generate access and refresh tokens
   const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
     admin._id
   );
 
-  // Save refresh token in the admin's document
   admin.refreshToken = refreshToken;
   await admin.save();
 
-  // Remove sensitive data before sending the response
   admin.refreshToken = undefined;
   admin.password = undefined;
 
   const options = {
     httpOnly: true,
-    secure: true, // Make sure this is only used in a production environment (e.g., behind HTTPS)
+    secure: true,
   };
 
-  // Return response with cookies and data
   return res
     .status(200)
     .cookie("accessToken", accessToken, options)
@@ -668,6 +725,8 @@ export {
   updateUserDetails,
   toggleWishList,
   getWishList,
+  generateForgetPasswordToken,
+  resetPassword,
   loginAdmin,
   blockUser,
   unblockUser,

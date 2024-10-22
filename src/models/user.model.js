@@ -87,7 +87,6 @@ const userSchema = new Schema(
       type: Date,
     },
 
-    /*
     passwordResetToken: {
       type: String,
     },
@@ -95,7 +94,6 @@ const userSchema = new Schema(
     passwordResetExpires: {
       type: Date,
     },
-    */
   },
   { timestamps: true }
 );
@@ -136,7 +134,6 @@ userSchema.methods.generateRefreshToken = function () {
   );
 };
 
-/*
 userSchema.methods.generateResetPasswordToken = function () {
   const resetToken = crypto.randomBytes(32).toString("hex");
   this.passwordResetToken = crypto
@@ -148,6 +145,5 @@ userSchema.methods.generateResetPasswordToken = function () {
 
   return resetToken;
 };
-*/
 
 export const User = mongoose.model("User", userSchema);

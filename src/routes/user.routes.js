@@ -9,6 +9,7 @@ import {
   getCurrentUser,
   getUserById,
   getWishList,
+  generateForgetPasswordToken,
   loginAdmin,
   loginUser,
   logoutUser,
@@ -19,6 +20,7 @@ import {
   toggleWishList,
   unblockUser,
   updateUserDetails,
+  resetPassword,
 } from "../controllers/user.controller.js";
 import { isAdmin, verifyJwt } from "../middleware/auth.middleware.js";
 
@@ -46,6 +48,8 @@ router.route("/deactivate").patch(deactivateOwnAccount);
 router.route("/delete").delete(deleteOwnAccount);
 router.route("/wishlist/:prodId").post(toggleWishList);
 router.route("/wishlist").get(getWishList);
+router.route("/forgot-password").post(generateForgetPasswordToken);
+router.route("/reset-password/:token").post(resetPassword);
 
 /////////////// 'ADMIN FUNCTIONALITY' ////////////////////
 
