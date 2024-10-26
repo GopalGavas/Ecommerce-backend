@@ -1,7 +1,6 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
-import { User } from "../models/user.model.js";
 import { Blog } from "../models/blog.model.js";
 import {
   deleteFromCloudinary,
@@ -85,7 +84,7 @@ const updateBlogDetails = asyncHandler(async (req, res) => {
     }
   );
 
-  if (!updateBlog) {
+  if (!updatedBlog) {
     throw new ApiError(500, "Something went wrong while updating the blog");
   }
 
