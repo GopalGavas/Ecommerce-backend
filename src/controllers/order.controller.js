@@ -23,14 +23,14 @@ const createOrder = asyncHandler(async (req, res) => {
 
   const orderData = {
     products: cart.products,
-    paymentMethod: paymentMethod || "Card",
+    paymentMethod,
     trackingNumber,
     orderBy: req.user?._id,
   };
 
   if (paymentMethod === "Card") {
     if (!paymentIntent) {
-      throw new ApiError(400, "Card details are required");
+      throw new ApiError(400, "Card details are required required");
     }
 
     orderData.paymentIntent = paymentIntent;

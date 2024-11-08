@@ -13,11 +13,11 @@ const orderSchema = new Schema(
       },
     ],
     paymentIntent: {
-      type: Object, // If you're using services like Stripe, you can map more specific fields here
+      type: Object,
     },
     paymentMethod: {
       type: String,
-      enum: ["Card", "COD"], // Define the available payment methods
+      enum: ["Card", "COD"],
       default: "Card",
     },
     paymentStatus: {
@@ -37,7 +37,7 @@ const orderSchema = new Schema(
       ],
     },
     trackingNumber: {
-      type: String, // Optional: for tracking shipments
+      type: String,
     },
     orderBy: {
       type: Schema.Types.ObjectId,
