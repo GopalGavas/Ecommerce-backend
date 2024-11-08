@@ -633,40 +633,6 @@ const deleteOwnAccount = asyncHandler(async (req, res) => {
     );
 });
 
-const deactivateUser = asyncHandler(async (req, res) => {
-  const { userId } = req.params;
-
-  if (!isValidObjectId(userId)) {
-    throw new ApiError(400, "Invalid User Id");
-  }
-
-  const user = await User.findById(userId);
-
-  if (!user) {
-    throw new ApiError(404, "User not found");
-  }
-
-  if (user.isDeleted) {
-    return res
-      .status(400)
-      .json(new ApiResponse(400, null, "User is already Deactivated"));
-  }
-
-  await User.findByIdAndUpdate(
-    userId,
-    {
-      $set: {
-        isDeleted: true,
-      },
-    },
-    { new: true }
-  );
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, null, "User account has been deactivated"));
-});
-
 const deleteUser = asyncHandler(async (req, res) => {
   const { userId } = req.params;
 
