@@ -4,7 +4,29 @@ import morgan from "morgan";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
+// "SECURITY PACKAGES"
+import helmet from "helmet";
+import ExpressMongoSanitize from "express-mongo-sanitize";
+
 const app = express();
+
+// "<------- SECURITY MIDDLEWARES ------->"
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        upgradeInsecureRequests: [],
+      },
+    },
+    frameguard: { action: "deny" },
+    referrerPolicy: { policy: "no-referrer" },
+  })
+);
+app.use(ExpressMongoSanitize());
 
 // "<------- MIDDLEWARES ------->"
 app.use(

@@ -698,7 +698,6 @@ export {
   unblockUser,
   deactivateOwnAccount,
   deleteOwnAccount,
-  deactivateUser,
   deleteUser,
   reactivateAccount,
 };
