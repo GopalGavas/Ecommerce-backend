@@ -11,6 +11,8 @@ import ExpressMongoSanitize from "express-mongo-sanitize";
 const app = express();
 
 // "<------- SECURITY MIDDLEWARES ------->"
+app.set("trust proxy", 1);
+
 app.use(
   helmet({
     contentSecurityPolicy: {
