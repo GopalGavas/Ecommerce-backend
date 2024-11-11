@@ -28,10 +28,8 @@ const generateAccessAndRefreshToken = async (userId) => {
 };
 
 const registerUser = asyncHandler(async (req, res) => {
-  // [take the data from body]
   const { fullName, email, phoneNo, password } = req.body;
 
-  // [validate data]
   if (
     [fullName, email, phoneNo, password].some(
       (field) => !field || field.trim === ""
@@ -43,8 +41,6 @@ const registerUser = asyncHandler(async (req, res) => {
     );
   }
 
-  // [check for existing user]
-
   const existingUser = await User.findOne({
     $or: [{ email }, { phoneNo }],
   });
@@ -53,7 +49,6 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "User already exists");
   }
 
-  // [create User]
   const user = await User.create({
     fullName,
     email,
@@ -137,7 +132,7 @@ const logoutUser = asyncHandler(async (req, res) => {
   const options = {
     httpOnly: true,
     secure: true,
-    sameSite: "strict",
+    sameSite: "Lax",
   };
 
   return res
@@ -595,7 +590,7 @@ const deactivateOwnAccount = asyncHandler(async (req, res) => {
   const options = {
     httpOnly: true,
     secure: true,
-    sameSite: "Strict",
+    sameSite: "Lax",
   };
 
   return res
@@ -617,7 +612,7 @@ const deleteOwnAccount = asyncHandler(async (req, res) => {
   const options = {
     httpOnly: true,
     secure: true,
-    sameSite: "Strict",
+    sameSite: "Lax",
   };
 
   return res

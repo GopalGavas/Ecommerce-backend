@@ -25,7 +25,6 @@ const createProduct = asyncHandler(async (req, res) => {
 
   let productImages = [];
 
-  // Handle multiple product images if they exist
   if (req.files && Array.isArray(req.files.productImages)) {
     if (req.files.productImages.length > 5) {
       throw new ApiError(400, "You can upload a maximum of 5 images");
@@ -34,16 +33,15 @@ const createProduct = asyncHandler(async (req, res) => {
     for (const file of req.files.productImages) {
       const uploadedImage = await uploadOnCloudinary(file.path);
       if (uploadedImage?.url) {
-        productImages.push(uploadedImage.url); // Add image URL to the array
+        productImages.push(uploadedImage.url);
       }
     }
   }
 
-  // Handle slug uniqueness
   let slug = slugify(title, { lower: true });
   const existingProduct = await Product.findOne({ slug });
   if (existingProduct) {
-    slug = `${slug}-${Date.now()}`; // Append timestamp to slug if a product with the same title exists
+    slug = `${slug}-${Date.now()}`;
   }
 
   const categoryData = await Category.findOne({ slug: category });
@@ -68,10 +66,7 @@ const createProduct = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Something went wrong while creating a product");
   }
 
-  // Format the price with currency symbol (e.g., USD)
-  const formattedPrice = `$${product.price.toFixed(2)}`; // Adjust the symbol as needed
-
-  // Send response with formatted price
+  const formattedPrice = `$${product.price.toFixed(2)}`;
 
   return res
     .status(200)
