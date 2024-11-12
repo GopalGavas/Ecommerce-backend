@@ -15,7 +15,7 @@ const createOrder = asyncHandler(async (req, res) => {
 
   const cart = await Cart.findOne({ orderBy: req.user?._id });
 
-  if (!cart || cart.length === 0) {
+  if (!cart || cart.products.length === 0) {
     throw new ApiError(400, "Your cart is empty");
   }
 

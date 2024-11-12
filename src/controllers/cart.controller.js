@@ -160,6 +160,8 @@ const removeFromCart = asyncHandler(async (req, res) => {
     cart.TotalAfterDiscount = null;
   }
 
+  await cart.save();
+
   return res
     .status(200)
     .json(new ApiResponse(200, cart, "Product removed from the  cart"));
@@ -268,6 +270,7 @@ const getCart = asyncHandler(async (req, res) => {
         "products.count": 1,
         "products.color": 1,
         "products.price": 1,
+        "products.product._id": 1,
         cartTotal: 1,
         appliedCoupons: 1,
         TotalAfterDiscount: 1,

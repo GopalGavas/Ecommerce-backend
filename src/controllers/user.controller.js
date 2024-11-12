@@ -388,10 +388,18 @@ const toggleWishList = asyncHandler(async (req, res) => {
 });
 
 const getWishList = asyncHandler(async (req, res) => {
+  if (!req.user?._id) {
+    throw new ApiError(401, "Unauthorized request");
+  }
+
   const user = await User.findById(req.user?._id).populate({
     path: "wishlist",
     select: "title price brand",
   });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
 
   return res
     .status(200)
@@ -607,7 +615,11 @@ const deactivateOwnAccount = asyncHandler(async (req, res) => {
 });
 
 const deleteOwnAccount = asyncHandler(async (req, res) => {
-  await User.findByIdAndDelete(req.user?._id);
+  await User.findByIdAndUpdate(
+    req.user?._id,
+    { $set: { isDeleted: true } },
+    { new: true }
+  );
 
   const options = {
     httpOnly: true,
