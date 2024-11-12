@@ -21,11 +21,12 @@ router.route("/:orderId/cancel").patch(cancelOrder);
 router.route("/:orderId/track").get(trackOrder);
 
 // 'Admin Routes'
-router.route("/admin/all").get(isAdmin, getAllOrders);
-router.route("/admin/:orderId/status").patch(isAdmin, updateOrderStatus);
+router.use(isAdmin);
+router.route("/admin/all").get(getAllOrders);
+router.route("/admin/:orderId/status").patch(updateOrderStatus);
 router
   .route("/admin/:orderId/payment-status/cod")
   .patch(updatePaymentStatusForCOD);
-router.route("/admin/:orderId/delete").delete(isAdmin, deleteOrder);
+router.route("/admin/:orderId/delete").delete(deleteOrder);
 
 export default router;
