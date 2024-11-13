@@ -7,7 +7,6 @@ import { sendEmail } from "../utils/mail.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { isValidObjectId } from "mongoose";
-import path from "path";
 
 const generateAccessAndRefreshToken = async (userId) => {
   const user = await User.findById(userId);
