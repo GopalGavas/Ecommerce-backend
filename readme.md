@@ -96,6 +96,46 @@ npm run dev
 npm start
 ```
 
+## 🐳 Docker Configuration
+
+To run SwiftMart with Docker, use Docker Compose for easy setup and container management.
+
+### 📋 Prerequisites
+
+Ensure you have the following installed:
+
+- **Docker**: [Install Docker](https://docs.docker.com/get-docker/)
+- **Docker Compose**: Included with Docker Desktop on most systems.
+
+### 🛠 Setup with Docker
+
+1. **Environment Variables**: Create a `.env.docker` file in the project root directory copy the .env file and add docker specific environment variables . This file will be automatically loaded by Docker Compose.
+
+   Example `.env.docker`:
+
+   ```dotenv
+   MONGODB_URL=mongodb://yourusername:yourpassword@mongodb
+   MONGO_INITDB_ROOT_USERNAME=yourusername
+   MONGO_INITDB_ROOT_PASSWORD=yourpassword
+   ```
+
+2. **Build and Start the Application**:Run the following command to build and start the services:
+
+```
+docker compose up -d
+```
+
+This will start:
+
+- nodeapp: Backend server at http://localhost:4000
+- mongodb: MongoDB database on port 9999
+
+3. **Stopping the Containers**: To stop the containers, use:
+
+```
+docker compose down
+```
+
 ## 📋 **API Endpoints**
 
 | Endpoint              | Description                                           |

@@ -1,0 +1,35 @@
+name: swiftmart-backend
+services:
+  nodeapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nodeapp-backend
+    env_file:
+      - .env.docker
+    ports:
+      - 4000:8080
+    depends_on:
+      - mongodb
+    networks:
+      - swiftmart-network
+
+  mongodb:
+    image: mongo
+    container_name: swiftmart-mongo
+    ports:
+      - 9999:27017
+    env_file:
+      - .env.docker
+    networks:
+      - swiftmart-network
+    volumes:
+      - swiftmartData:/data/db
+
+networks:
+  swiftmart-network:
+    driver: bridge
+
+volumes:
+  swiftmartData:
+    driver: local
