@@ -7,6 +7,7 @@ import { sendEmail } from "../utils/mail.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { isValidObjectId } from "mongoose";
+import path from "path";
 
 const generateAccessAndRefreshToken = async (userId) => {
   const user = await User.findById(userId);
@@ -389,21 +390,35 @@ const toggleWishList = asyncHandler(async (req, res) => {
 
 const getWishList = asyncHandler(async (req, res) => {
   if (!req.user?._id) {
-    throw new ApiError(401, "Unauthorized request");
+    throw new ApiError(401, "User not logged In");
   }
 
   const user = await User.findById(req.user?._id).populate({
     path: "wishlist",
-    select: "title price brand",
+    select: "title brand price",
   });
 
   if (!user) {
     throw new ApiError(404, "User not found");
   }
 
+  if (!user.wishlist || user.wishlist.length === 0) {
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          [],
+          "You have not added anything to  your wishlist"
+        )
+      );
+  }
+
   return res
     .status(200)
-    .json(new ApiResponse(200, user.wishlist, "Wishlist fetched successfully"));
+    .json(
+      new ApiResponse(200, user.wishlist, "User wishlist fetched successfully")
+    );
 });
 
 const generateForgetPasswordToken = asyncHandler(async (req, res) => {

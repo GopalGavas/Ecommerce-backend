@@ -49,19 +49,22 @@ router.route("/admin/login").post(loginLimiter, loginAdmin);
 router.use(verifyJwt);
 
 // "SAFE ROUTES"
+router.route("/wishlist").get(getWishList);
+router.route("/current-user").get(getCurrentUser);
+router.route("/:userId").get(getUserById);
+
 router.route("/logout").post(logoutUser);
 router.route("/refresh-token").post(refreshAccessToken);
 router.route("/change-password").post(changePassword);
 router.route("/address").post(saveAddress);
-router.route("/current-user").get(getCurrentUser);
-router.route("/:userId").get(getUserById);
-router.route("/update-details").patch(updateUserDetails);
-router.route("/deactivate").patch(deactivateOwnAccount);
-router.route("/delete").delete(deleteOwnAccount);
 router.route("/wishlist/:prodId").post(toggleWishList);
-router.route("/wishlist").get(getWishList);
 router.route("/forgot-password").post(generateForgetPasswordToken);
 router.route("/reset-password/:token").post(resetPassword);
+
+router.route("/update-details").patch(updateUserDetails);
+router.route("/deactivate").patch(deactivateOwnAccount);
+
+router.route("/delete").delete(deleteOwnAccount);
 
 /////////////// 'ADMIN FUNCTIONALITY' ////////////////////
 
