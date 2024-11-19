@@ -5,6 +5,7 @@ import { Order } from "../models/order.model.js";
 import { Cart } from "../models/cart.model.js";
 import mongoose, { isValidObjectId } from "mongoose";
 import { v4 as uuidv4 } from "uuid";
+import { Product } from "../models/product.model.js";
 
 const createOrder = asyncHandler(async (req, res) => {
   const { paymentIntent, paymentMethod } = req.body;
@@ -35,6 +36,25 @@ const createOrder = asyncHandler(async (req, res) => {
 
     orderData.paymentIntent = paymentIntent;
     orderData.paymentStatus = "Completed";
+  }
+
+  for (const item of cart.products) {
+    const product = await Product.findById(item.product);
+
+    if (!product) {
+      throw new ApiError(404, `Product with id ${item.product} not found`);
+    }
+
+    if (product.quantity < item.count) {
+      throw new ApiError(
+        400,
+        `Insufficient stock for product: ${product.title}`
+      );
+    }
+
+    product.quantity -= item.count;
+    product.sold += item.count;
+    await product.save();
   }
 
   const order = new Order(orderData);
